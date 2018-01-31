@@ -22,21 +22,10 @@ def init():
 
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    #gluOrtho3D(0.0, 100.0, 0.0, 100.0)
-    glEnable(GL_DEPTH_TEST)
-
-
-def draw_ball():
-    glutSolidSphere(2, 20, 20)
-
-
-def main():
-
-    init()
 
 
     glEnable(GL_LIGHTING)
-    lightZeroPosition = [10.,4.,10.,1.]
+    lightZeroPosition = [10.,4.,10.,100.]
     lightZeroColor = [1,1,1,1.0] #green tinged
 
     glLightfv(GL_LIGHT0, GL_POSITION, lightZeroPosition)
@@ -45,33 +34,41 @@ def main():
     glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.05)
     glEnable(GL_LIGHT0)
 
-    glutDisplayFunc(display)
-    glMatrixMode(GL_PROJECTION)
 
-    #distance
-    gluPerspective(100.,1.,1.,40.)
-    glMatrixMode(GL_MODELVIEW)
-    gluLookAt(0,0,10,
-              0,0,0,
-              0,1,0)
-    glPushMatrix()
-    glutMainLoop()
-    return
-
-def on_click(button, state, x, y):
-    global sphereLocations
-    if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
-        sphereLocations.append((x,y))
+def draw_ball():
+    glutSolidSphere(2, 20, 20)
 
 
 def display():
+    global sphereLocations
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-    glPushMatrix()
-    color = [1.0,0.,0.,1.]
-    glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-    draw_ball()
-    glPopMatrix()
+    for i in range(-100,100,5):
+        glPushMatrix()
+        glTranslatef(i,0,1)
+        color = [1.0,0.,0.,1.]
+        glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
+        draw_ball()
+        glPopMatrix()
+    glFlush()
     glutSwapBuffers()
-    return
+    glutPostRedisplay()
+
+
+def main():
+
+    init()
+
+    glutDisplayFunc(display)
+    #glMatrixMode(GL_PROJECTION)
+
+    #distance
+    gluPerspective(100.,1.,1.,400.)
+    glMatrixMode(GL_MODELVIEW)
+    gluLookAt(-10,0,50,
+              -10,0,0,
+              0,1,0)
+    glutMainLoop()
+
+    #return
 
 if __name__ == '__main__': main()
