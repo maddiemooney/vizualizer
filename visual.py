@@ -3,8 +3,6 @@ from OpenGL.GLU import *
 from OpenGL.GL import *
 import sys
 
-
-
 name = "Vizualizer Test"
 
 def init():
@@ -30,11 +28,12 @@ def init():
     glLoadIdentity()
 
 
-    glEnable(GL_LIGHTING)
-    lightZeroPosition = [0.,0.,1.,0.] #aligned with z axis
-    lightZeroColor = [1,1,1,1.0] #green tinged
+def lighting():
 
-    #(light, source, param)
+    glEnable(GL_LIGHTING)
+    lightZeroPosition = [0., 0., 1., 0.]  # aligned with z axis
+    lightZeroColor = [1, 1, 1, 1.0]  # green tinged
+    # (light, source, param)
     glLightfv(GL_LIGHT0, GL_POSITION, lightZeroPosition)
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightZeroColor)
     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.1)
@@ -42,32 +41,33 @@ def init():
     glEnable(GL_LIGHT0)
 
 
-def draw_ball():
+
+def draw_ball(x,y,z):
     #(radius,slices,stacks)
+    glTranslatef(x, y, z)  # translation vector for making balls
     glutSolidSphere(2, 10, 10)
 
-
 def display():
-    #clear
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+    for j in range(-100,100):
+        #clear
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
-    for i in range(-100,100,5):
-        glPushMatrix()
-        glTranslatef(i,0,0) #translation vector
-        color = [1.0,0.,0.,1.] #red atm
-        #(face, pname, param)
-        glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
-        draw_ball()
-        glPopMatrix()
-    glFlush()
-    glutSwapBuffers()
-    glutPostRedisplay()
+        for i in range(-100,100,5):
+            glPushMatrix()
+            color = [1.0,0.,0.,1.] #red atm
+            #(face, pname, param)
+            glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
+            draw_ball(i,j,0)
+            glPopMatrix()
+        glFlush()
+        glutSwapBuffers()
+        glutPostRedisplay()
 
 
 def main():
 
     init()
-
+    lighting()
     glutDisplayFunc(display)
 
     #distance
