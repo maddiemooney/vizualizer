@@ -44,15 +44,15 @@ def lighting():
 
 def draw_ball(x,y,z):
     #(radius,slices,stacks)
-    glTranslatef(x, y, z)  # translation vector for making balls
+    glTranslatef(x, (-0.095*y**2+4*y), z)  # translation vector for making balls
     glutSolidSphere(2, 10, 10)
 
 def display():
-    for j in range(-100,100):
+    for j in range(0,42):
         #clear
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
-        for i in range(-100,100,5):
+        for i in range(1):  #(-100,100,5)
             glPushMatrix()
             color = [1.0,0.,0.,1.] #red atm
             #(face, pname, param)
