@@ -1,76 +1,77 @@
-"""
-hueh
-"""
-import math
+from OpenGL.GLUT import *
+from OpenGL.GLU import *
+from OpenGL.GL import *
 import sys
-import time
-import argparse
-import pyaudio
-from PyQt5.QtCore import QThread, pyqtSignal, QTimer, pyqtSlot, QElapsedTimer
-from PyQt5 import QtWidgets
-import numpy as np
-from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QGroupBox, QHBoxLayout,
-                             QLabel, QVBoxLayout, QCheckBox, QDoubleSpinBox)
+
+name = "Vizualizer Test"
+
+def init():
+    glutInit(sys.argv)
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
+    glutInitWindowSize(400, 400)
+    glutCreateWindow(name)
+
+    # background color
+    glClearColor(0., 0., 0., 1.)
+
+    # flat or smooth
+    glShadeModel(GL_SMOOTH)
+
+    glEnable(GL_CULL_FACE)
+    glEnable(GL_DEPTH_TEST)
+
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    #gluOrtho3D(0.0, 100.0, 0.0, 100.0)
+    glEnable(GL_DEPTH_TEST)
 
 
-class UI(QtWidgets.QMainWindow):
-
-    def __init__(self):
-
-        QtWidgets.QMainWindow.__init__(self)
-        self.setWindowTitle("Vizualizer")
-        self.widgetHolder =  QtWidgets.QWidget()
-
-        self.mainLayout = QtWidgets.QVBoxLayout()
-        self.widgetHolder.setLayout(self.mainLayout)
-
-        self.show()
+def draw_ball():
+    glutSolidSphere(2, 20, 20)
 
 
-class Listen(QThread):
+def main():
 
-    CHANNELS = 1
-    RATE = 44100
-    p = None
-    audio = np.array([])
-    stream = None
-
-    def __init__(self):
-        QThread.__init__(self)
-
-    def run(self):
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=pyaudio.paFloat32, channels=self.CHANNELS,)
-        self.stream.start_stream()
-
-    def callback(self, in_data, *kwargs):
-        self.receive_time = time.time()
-        audio_data = np.fromstring(in_data,dtype=np.float32)
-        self.audio.extend(audio_data)
-        self.comparableAudio = np.append(self.comparableAudio, audio_data)
-        return audio_data, pyaudio.paContinue
-
-    def algo(self):
-        audio = np.array([self.audio.popleft() for _ in range(self.count)])
-
-        #do stuff with audio
-
-def my_exception_hook(exectype, value, traceback):
-    """
-    overrides normal exceptions, because it is wrong sometimes
-    :param exectype:
-    :param value:
-    :param traceback:
-    :return:
-    """
-    print(exectype,value,traceback)
-    sys._excepthook(exectype,value, traceback)
-    sys.exit(1)
+    init()
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='')
+    glEnable(GL_LIGHTING)
+    lightZeroPosition = [10.,4.,10.,1.]
+    lightZeroColor = [1,1,1,1.0] #green tinged
+
+    glLightfv(GL_LIGHT0, GL_POSITION, lightZeroPosition)
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightZeroColor)
+    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.1)
+    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.05)
+    glEnable(GL_LIGHT0)
+
+    glutDisplayFunc(display)
+    glMatrixMode(GL_PROJECTION)
+
+    #distance
+    gluPerspective(100.,1.,1.,40.)
+    glMatrixMode(GL_MODELVIEW)
+    gluLookAt(0,0,10,
+              0,0,0,
+              0,1,0)
+    glPushMatrix()
+    glutMainLoop()
+    return
+
+def on_click(button, state, x, y):
+    global sphereLocations
+    if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
+        sphereLocations.append((x,y))
 
 
+def display():
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+    glPushMatrix()
+    color = [1.0,0.,0.,1.]
+    glMaterialfv(GL_FRONT,GL_DIFFUSE,color)
+    draw_ball()
+    glPopMatrix()
+    glutSwapBuffers()
+    return
 
+if __name__ == '__main__': main()
