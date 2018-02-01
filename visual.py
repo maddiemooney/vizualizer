@@ -4,9 +4,15 @@ from OpenGL.GL import *
 import sys
 import math
 
-name = "Vizualizer Test"
+import pyaudio
+import wave
+import numpy as np
+
 
 class Visual:
+
+    def __init__(self):
+        self.name = "Vizualizer Test"
 
     def initbg(self):
         glutInit(sys.argv)
@@ -14,7 +20,7 @@ class Visual:
         #initializes double buffered window, RGBA mode, depth buffer
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
         glutInitWindowSize(400, 400)
-        glutCreateWindow(name)
+        glutCreateWindow(self.name)
 
         # background color (red, green, blue, alpha)
         glClearColor(0., 0., 0., 1.)
@@ -71,7 +77,7 @@ class Visual:
             glutPostRedisplay()
 
 
-    def audiomain(self):
+    def visualmain(self):
 
         self.initbg()
         self.lighting()
@@ -87,12 +93,61 @@ class Visual:
 
 class Audio:
 
-    def ree(self):
-        print("heck")
+    def __init__(self):
+
+        self.chunk = 2048
+        self.channels = 1
+        self.rate = 44100
+
+        # open stream
+        self.p = pyaudio.PyAudio()
+        self.stream = self.p.open(format=pyaudio.paFloat32,
+                        channels=self.channels,
+                        rate=self.rate,
+                        input=True,
+                        output=True,
+                        stream_callback=self.callback)
+        self.stream.start_stream()
+
+    def callback(self, in_data):
+
+        # read some data
+        data = np.fromstring(in_data, dtype=np.float32)
+        # play stream and find the frequency of each chunk
+        while len(data) == self.chunk * self.swidth:
+            # write data out to the audio stream
+            self.stream.write(data)
+            # unpack the data and times by the hamming window
+            indata = np.array(wave.struct.unpack("%dh" % (len(data) / self.swidth), data)) * self.window
+            # Take the fft and square each value
+            fftData = abs(np.fft.rfft(indata)) ** 2
+            # find the maximum
+            which = fftData[1:].argmax() + 1
+            # use quadratic interpolation around the max
+            if which != len(fftData) - 1:
+                y0, y1, y2 = np.log(fftData[which - 1:which + 2:])
+                x1 = (y2 - y0) * .5 / (2 * y1 - y2 - y0)
+                # find the frequency and output it
+                thefreq = (which + x1) * self.rate / self.chunk
+                print("The freq is %f Hz." % thefreq)
+            else:
+                thefreq = which * self.RATE / self.chunk
+                print("The freq is %f Hz." % thefreq)
+            # read some more data
+            data = self.wf.readframes(self.chunk)
+        if data:
+            self.stream.write(data)
+        self.stream.close()
+        p.terminate()
+
+
+
+
 
 
 def main():
-    Visual().audiomain()
+    #Visual().visualmain()
+    Audio().getfreq()
 
 main()
 
