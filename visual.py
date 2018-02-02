@@ -53,14 +53,17 @@ class Visual:
 
     def draw_ball(self,x,y,z):
         #(radius,slices,stacks)
-        if x%2==0:
-            glTranslatef(x, math.sin(.25*y)*2, z)
+        x1 = x/5
+        #print(x1)
+        if x1==0:
+            glTranslatef(x, math.sin(y)*10, z)
+
         else:
-            glTranslatef(x, math.sin(.38*y)*4, z)
+            glTranslatef(x, math.sin(.166*y)*10, z)
         glutSolidSphere(2, 10, 10)
 
     def display(self):
-        for j in range(50):
+        for j in range(100):
             #clear
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
 
@@ -93,61 +96,37 @@ class Visual:
 
 class Audio:
 
-    def __init__(self):
+    def audiomain(self):
 
-        self.chunk = 2048
-        self.channels = 1
-        self.rate = 44100
+        CHUNK = 4096  # number of data points to read at a time
+        RATE = 44100  # time resolution of the recording device (Hz)
+        TARGET = 440  # show only this one frequency
 
-        # open stream
-        self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=pyaudio.paFloat32,
-                        channels=self.channels,
-                        rate=self.rate,
-                        input=True,
-                        output=True,
-                        stream_callback=self.callback)
-        self.stream.start_stream()
+        p = pyaudio.PyAudio()  # start the PyAudio class
+        stream = p.open(format=pyaudio.paInt16, channels=1, rate=RATE, input=True,
+                        frames_per_buffer=CHUNK)  # uses default input device
 
-    def callback(self, in_data):
+        # create a numpy array holding a single read of audio data
+        for i in range(30):  # to it a few times just to see
+            data = np.fromstring(stream.read(CHUNK), dtype=np.int16)
+            fft = abs(np.fft.fft(data).real)
+            fft = fft[:int(len(fft) / 2)]  # keep only first half
+            freq = np.fft.fftfreq(CHUNK, 1.0 / RATE)
+            freq = freq[:int(len(freq) / 2)]  # keep only first half
+            assert freq[-1] > TARGET, "ERROR: increase chunk size"
+            val = fft[np.where(freq >= TARGET)[0][0]]
+            print(val)
 
-        # read some data
-        data = np.fromstring(in_data, dtype=np.float32)
-        # play stream and find the frequency of each chunk
-        while len(data) == self.chunk * self.swidth:
-            # write data out to the audio stream
-            self.stream.write(data)
-            # unpack the data and times by the hamming window
-            indata = np.array(wave.struct.unpack("%dh" % (len(data) / self.swidth), data)) * self.window
-            # Take the fft and square each value
-            fftData = abs(np.fft.rfft(indata)) ** 2
-            # find the maximum
-            which = fftData[1:].argmax() + 1
-            # use quadratic interpolation around the max
-            if which != len(fftData) - 1:
-                y0, y1, y2 = np.log(fftData[which - 1:which + 2:])
-                x1 = (y2 - y0) * .5 / (2 * y1 - y2 - y0)
-                # find the frequency and output it
-                thefreq = (which + x1) * self.rate / self.chunk
-                print("The freq is %f Hz." % thefreq)
-            else:
-                thefreq = which * self.RATE / self.chunk
-                print("The freq is %f Hz." % thefreq)
-            # read some more data
-            data = self.wf.readframes(self.chunk)
-        if data:
-            self.stream.write(data)
-        self.stream.close()
+        # close the stream gracefully
+        stream.stop_stream()
+        stream.close()
         p.terminate()
-
-
-
 
 
 
 def main():
     #Visual().visualmain()
-    Audio().getfreq()
+    Audio().audiomain()
 
 main()
 
